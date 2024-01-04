@@ -1,0 +1,13 @@
+name: httpproxy.cr
+version: 0.1
+
+authors:
+  - djeysx
+
+crystal: ">= 10.0.0"
+
+targets:
+  httpProxyCr:
+    main: src/httpProxy.cr
+
+license: MIT
