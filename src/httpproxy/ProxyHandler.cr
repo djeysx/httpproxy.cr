@@ -54,10 +54,20 @@ class HttpProxy::ProxyHandler
 
   private def handle_http(context)
     begin
-      uri = URI.parse(context.request.resource)
-      puts "#{context.request.remote_address} HTTP #{uri}"
+      request = context.request
+      uri = URI.parse(request.resource)
+      puts "#{request.remote_address} HTTP #{uri}"
       client = HTTP::Client.new(uri)
-      client.exec(context.request) do |response|
+
+      srcRes : String
+      if uri.query != nil
+        srcRes = "#{uri.path}?#{uri.query}"
+      else
+        srcRes = "#{uri.path}"
+      end
+      request.resource = srcRes
+      
+      client.exec(request) do |response|
         context.response.headers.merge!(response.headers)
         context.response.status_code = response.status_code
         if response.body_io?
@@ -71,5 +81,12 @@ class HttpProxy::ProxyHandler
     rescue IO::Error
     rescue HTTP::Server::ClientError
     end
+  end
+end
+
+# Override
+class HTTP::Request
+  def resource=(res : String)
+    @resource = res
   end
 end
