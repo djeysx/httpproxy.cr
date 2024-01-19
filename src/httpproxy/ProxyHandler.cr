@@ -58,28 +58,15 @@ class HttpProxy::ProxyHandler
       uri = URI.parse(request.resource)
       puts "#{request.remote_address} HTTP #{request.method} #{uri}"
       client = HTTP::Client.new(uri)
-      
-      # adapte le champ resource
-      srcRes : String
-      if uri.query != nil
-        srcRes = "#{uri.path}?#{uri.query}"
-      else
-        srcRes = "#{uri.path}"
-      end
-      request.resource = srcRes
-
-      h_connection = request.headers["Connection"]
-      request.headers["Connection"] =  "close"
 
       client.exec(request) do |response|
         context.response.headers.merge!(response.headers)
-        context.response.headers["Connection"] =  h_connection
         context.response.status_code = response.status_code
         if response.body_io?
           IO.copy(response.body_io, context.response.output)
-          response.body_io.close
         end
       end
+      client.close
     rescue ex : Socket::ConnectError
       Log.error { "HTTP.Client.CONNECT > #{ex.message} (#{ex.class})" }
       context.response.respond_with_status(HTTP::Status::BAD_GATEWAY, ex.message)
@@ -88,12 +75,5 @@ class HttpProxy::ProxyHandler
     rescue ex : HTTP::Server::ClientError
       Log.error { "HTTP.Server.Error > #{ex.message} (#{ex.class})" }
     end
-  end
-end
-
-# Override
-class HTTP::Request
-  def resource=(res : String)
-    @resource = res
   end
 end

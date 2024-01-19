@@ -44,7 +44,8 @@ def main
     end
   end
 
-  server = HTTP::Server.new([HttpProxy::ProxyHandler.new])
+  server = HTTP::Server.new([HTTP::ErrorHandler.new(verbose = true),
+                             HttpProxy::ProxyHandler.new])
   address = server.bind_tcp("::", 8080)
   puts "Listening on http://#{address}"
   server.listen
